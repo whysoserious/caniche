@@ -1,13 +1,16 @@
-(ns caniche.core)
+(ns caniche.core
+  (:require [crypto.random]))
 
 ;; TODO difference between require and import
-(require '[clojure.data.codec.base64 :as b64])
 (import (javax.crypto Cipher KeyGenerator SecretKey)
         (javax.crypto.spec SecretKeySpec)
         (java.security SecureRandom)
         (org.apache.commons.codec.binary Base64))
 
 ;; Encryption functions taken from http://stackoverflow.com/questions/10221257/is-there-an-aes-library-for-clojure
+
+(defn secret-key [size]
+  (crypto.random/base32 size))
 
 (defn bytes [s]
   (.getBytes s "UTF-8"))

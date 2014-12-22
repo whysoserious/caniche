@@ -3,19 +3,11 @@
            [compojure.core :as route]
            [ring.adapter.jetty :as ring]))
 
+;; TODO route not found
 (defroutes app
-  (GET "/" [] "<h1>Hello World!</h1>"))
-
-(defn -main []
-  (println "START")
-  (ring/run-jetty #'routes {:port 8080 :join? false}))
-
-
-
-
-
-
-
-
-
-
+  (GET "/" [] "<h1>Hello World!</h1>")
+  (POST "/upload"
+        {{{tempfile :tempfile filename :filename} :file} :params :as params}
+        {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body params}))

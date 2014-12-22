@@ -1,0 +1,12 @@
+;; -*- lexical-binding: t -*-
+(require 'web)
+
+;; GET
+
+(let ((url "http://localhost:3000"))
+  (web-http-get
+   (lambda (httpc header my-data)
+     (with-current-buffer (get-buffer-create "*HTTP Response*")
+       (goto-char (point-max))
+       (insert my-data)))
+   :url url))

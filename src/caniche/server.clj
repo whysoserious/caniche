@@ -2,7 +2,10 @@
   (require [compojure.core :refer :all]
            [compojure.core :as route]
            [ring.adapter.jetty :as ring]
-           [clojure.java.io :as io]))
+           [clojure.java.io :as io]
+           [ring.middleware.params :as params]
+           [ring.middleware.multipart-params :as multipart-params]))
+
 
 ;; TODO route not found
 (defroutes caniche-routes
@@ -20,10 +23,13 @@
          :body "OK\n"}))
 
 (defn log-request [app]
+  (prn ">>>>>>>>>>>>>>>>>>>>>")
   (fn [req]
     (doseq [p req] (prn p))
     (app req)))
 
 (def app
   (-> caniche-routes
-      log-request))
+      log-request
+      params/wrap-params
+      multipart-params/wrap-multipart-params))

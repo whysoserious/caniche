@@ -10,26 +10,21 @@
 ;; TODO route not found
 (defroutes caniche-routes
   (GET "/" [] "<h1>Hello World!</h1>\n")
-  (POST "/x"
-        params
-        {:status 200
-         :headers {"Content-Type" "text/html"}
-         :body (str params)})
   (POST "/upload"
-        {{{tempfile :tempfile filename :filename} :file} :params :as params}
-;;        (io/copy tempfile (io/file "resources" "public" filename))
+        params
         {:status 200
          :headers {"Content-Type" "text/html"}
          :body "OK\n"}))
 
 (defn log-request [app]
-  (prn ">>>>>>>>>>>>>>>>>>>>>")
   (fn [req]
+    (prn ">>>")
     (doseq [p req] (prn p))
     (app req)))
 
 (def app
-  (-> caniche-routes
-      log-request
-      params/wrap-params
-      multipart-params/wrap-multipart-params))
+  (-> 
+   caniche-routes
+   log-request
+   params/wrap-params
+   multipart-params/wrap-multipart-params))

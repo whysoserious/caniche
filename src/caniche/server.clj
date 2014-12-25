@@ -6,25 +6,42 @@
            [ring.middleware.params :as params]
            [ring.middleware.multipart-params :as multipart-params]))
 
+(defn handle-upload [tempfile filename]
+  "File String"
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body "OK\n"})
 
 ;; TODO route not found
 (defroutes caniche-routes
-  (GET "/" [] "<h1>Hello World!</h1>\n")
   (POST "/upload"
-        params
-        {:status 200
-         :headers {"Content-Type" "text/html"}
-         :body "OK\n"}))
-
-(defn log-request [app]
-  (fn [req]
-    (prn ">>>")
-    (doseq [p req] (prn p))
-    (app req)))
+        {{{tempfile :tempfile filename :filename} "file"} :multipart-params}
+        (handle-upload tempfile filename)))
 
 (def app
   (-> 
    caniche-routes
-   log-request
    params/wrap-params
    multipart-params/wrap-multipart-params))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

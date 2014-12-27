@@ -1,8 +1,9 @@
-(ns caniche.client
-  (require [ring.util.codec :as c]
-           [clojure.string :as string]
-           [clojure.set :as set]
-           [clj-http.client :as client]))
+2(ns caniche.client
+   (require [ring.util.codec :as c]
+            [clojure.string :as string]
+            [clojure.set :as set]
+            [clj-http.client :as client]
+            [hickory.select :as s]))
 
 ;; TODO connection manager
 
@@ -14,6 +15,7 @@
 
 (def origin (str "http://" hostname))
 
+;; TODO
 (defn random-user-agent []
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36")
 
@@ -42,14 +44,32 @@
   "Returns :url and :anchor"
   (let [body (create-comment-body story-id body nick)
         referer (str origin  "/artykul/" story-id)
-        headers (assoc (standard-headers) "Referer" referer)
-        response (client/post (str origin "/komentarz") {:body body
-                                                         :body-encoding "UTF-8"
-                                                         :content-length (count body)
-                                                         :headers headers})]
-    (-> response
-        :headers 
+        headers (assoc (standard-headers) "Referer" referer)]
+    (-> (client/post (str origin "/komentarz") {:body body
+                                                :body-encoding "UTF-8"
+                                                :headers headers})
+        :headers
         (get "Location")
         (string/split #"#")
         (zipmap [:url :anchor])
         set/map-invert)))
+
+(defn get-comment [url anchor]
+  (let [parsed-body (-> (client/get url {:headers (standard-headers)})
+                        :body
+                        parse
+                        as-hickory)]
+    (-> (s/select 
+         (s/child 
+          (s/id anchor) 
+          (s/class "comment-body")
+          (s/class "comment-text")) 
+         parsed-body)
+        first
+        :content
+        first
+        string/trim)))
+
+
+
+

@@ -39,6 +39,7 @@
                   "article_comment[aut]" nick})))
 
 (defn post-comment [story-id body nick]
+  "Returns :url and :anchor"
   (let [body (create-comment-body story-id body nick)
         referer (str origin  "/artykul/" story-id)
         headers (assoc (standard-headers) "Referer" referer)
@@ -51,4 +52,4 @@
         (get "Location")
         (string/split #"#")
         (zipmap [:url :anchor])
-        (set/map-invert))))
+        set/map-invert)))

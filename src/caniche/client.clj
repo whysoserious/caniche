@@ -11,10 +11,14 @@
 
 (def origin (str "http://" hostname))
 
+(def cm (clj-http.conn-mgr/make-reusable-conn-manager {:timeout 10 :threads 1}))
+
+(def cs (clj-http.cookies/cookie-store))
+
 (defn random-user-agent []
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36")
 
-(defn headers []
+(defn standard-headers []
   { "Host" hostname
     "Cache-Control" "max-age=0"
     "Content-Type" "application/x-www-form-urlencoded"
@@ -35,23 +39,45 @@
                   "article_comment[txt]" body
                   "article_comment[aut]" nick})))
 
-(defn home []
-  (client/get origin ))
+(defn get-story [story-id]
+  (prn ">>>>>>>>>>>>>>>>")
+  (client/get (str origin "/artykul/" story-id) {
+                                                 :headers (standard-headers)
+                                                 :connection-manager cm
+                                                 :cookie-store cs}))
 
-  ;; ;; TODO connection-manager,
-  ;; ;; Cookie manager
-  ;; ;; monadify
-  ;; (defn create-comment [story-id body nick]
-  ;;   (let [body (create-comment-body story-id body nick)
-  ;;         referer (str origin "/artykul/" story-id "/")]
-  ;;     (client/post origin {
-  ;;                          :body body
-  ;;                          :body-encoding "UTF-8"
-  ;;                          :content-length (count body)
-  ;;                          :headers {
+(defn post-comment [story-id body nick]
+  (let [body (create-comment-body story-id body nick)
+        referer (-> (get-story story-id) :trace-redirects last)
+        headers (assoc (standard-headers) "Referer" referer)]
+    (client/post (str origin "/komentarz") { :body body
+                         :body-encoding "UTF-8"
+                         :content-length (count body)
+                         :headers headers
+                         :connection-manager cm
+                         :cookies {"SID" {:discard true, :path "/", :secure false, :value "pudelg2", :version 0}}})))
 
-  ;;                                    "Cookie" "SID=pudelp1; __gfp_64b=AlDH1o19ARZLMt5hDBLOashSpKdifniBjewIBUrYXnL.n7; cm-cookies=true; o2fbox_d_=true; __utmt=1; __utmt_b=1; _urac_v2_=74619; _bfp=1015254217; __utma=21588644.1189142059.1419055197.1419055197.1419595110.2; __utmb=21588644.62.9.1419601164914; __utmc=21588644; __utmz=21588644.1419055197.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)"
-  ;;                                    :debug true :debug-body true}}))))
+
+;; ;; TODO connection-manager,
+;; ;; Cookie manager
+;; ;; monadify
+
+;;                                    "Cookie" "SID=pudelp1; __gfp_64b=AlDH1o19ARZLMt5hDBLOashSpKdifniBjewIBUrYXnL.n7; cm-cookies=true; o2fbox_d_=true; __utmt=1; __utmt_b=1; _urac_v2_=74619; _bfp=1015254217; __utma=21588644.1189142059.1419055197.1419055197.1419595110.2; __utmb=21588644.62.9.1419601164914; __utmc=21588644; __utmz=21588644.1419055197.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)"
+;;                                    :debug true :debug-body true}}))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

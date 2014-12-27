@@ -1,7 +1,10 @@
 (ns caniche.client
   (require [ring.util.codec :as c]
            [clojure.string :as string]
+           [clojure.set :as set]
            [clj-http.client :as client]))
+
+;; TODO connection manager
 
 (def chunk-size 200)
 
@@ -10,8 +13,6 @@
 (def hostname "www.pudelek.pl")
 
 (def origin (str "http://" hostname))
-
-(def cm (clj-http.conn-mgr/make-reusable-conn-manager {:timeout 10 :threads 1}))
 
 (defn random-user-agent []
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36")
@@ -40,9 +41,14 @@
 (defn post-comment [story-id body nick]
   (let [body (create-comment-body story-id body nick)
         referer (str origin  "/artykul/" story-id)
-        headers (assoc (standard-headers) "Referer" referer)]
-    (client/post (str origin "/komentarz") { :body body
-                         :body-encoding "UTF-8"
-                         :content-length (count body)
-                         :headers headers
-                         :connection-manager cm})))
+        headers (assoc (standard-headers) "Referer" referer)
+        response (client/post (str origin "/komentarz") {:body body
+                                                         :body-encoding "UTF-8"
+                                                         :content-length (count body)
+                                                         :headers headers})]
+    (-> response
+        :headers 
+        (get "Location")
+        (string/split #"#")
+        (zipmap [:url :anchor])
+        (set/map-invert))))

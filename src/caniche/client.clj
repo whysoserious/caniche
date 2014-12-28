@@ -8,10 +8,6 @@
 
 ;; TODO connection manager
 
-(def chunk-size 200)
-
-(def max-story-id 70000)
-
 (def hostname "www.pudelek.pl")
 
 (def origin (str "http://" hostname))

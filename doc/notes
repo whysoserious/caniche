@@ -1,0 +1,7 @@
+TODO
+
+bug report for clj-http
+
+cleaner code in client.clj
+
+receive gzipped - response gzipped

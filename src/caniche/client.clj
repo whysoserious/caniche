@@ -1,9 +1,10 @@
-2(ns caniche.client
+(ns caniche.client
    (require [ring.util.codec :as c]
             [clojure.string :as string]
             [clojure.set :as set]
             [clj-http.client :as client]
-            [hickory.select :as s]))
+            [hickory.core :as hc]
+            [hickory.select :as hs]))
 
 ;; TODO connection manager
 
@@ -57,13 +58,13 @@
 (defn get-comment [url anchor]
   (let [parsed-body (-> (client/get url {:headers (standard-headers)})
                         :body
-                        parse
-                        as-hickory)]
-    (-> (s/select 
-         (s/child 
-          (s/id anchor) 
-          (s/class "comment-body")
-          (s/class "comment-text")) 
+                        hc/parse
+                        hc/as-hickory)]
+    (-> (hs/select 
+         (hs/child 
+          (hs/id anchor) 
+          (hs/class "comment-body")
+          (hs/class "comment-text")) 
          parsed-body)
         first
         :content

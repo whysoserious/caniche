@@ -8,9 +8,8 @@
            [ring.middleware.multipart-params :as multipart-params])
   (import [org.apache.commons.io IOUtils]))
 
-(defn split-into-chunks [rdr size]
-  "return lazy seq of chunks"
-  (prn size))
+(defn split-into-chunks [arr size]
+  (partition size size [] arr))
 
 (defroutes caniche-routes
   (POST "/upload"

@@ -1,4 +1,4 @@
-(ns caniche.core
+(ns caniche.crypto
   (:require [crypto.random]))
 
 ;; TODO difference between require and import
@@ -12,19 +12,22 @@
 (defn- secret-key [size]
   (crypto.random/base32 size))
 
-(defn- bytes [s]
+(defn- string-to-bytes [s]
   (.getBytes s "UTF-8"))
+
+(defn- vec-to-bytes [arr]
+  (byte-array (map byte arr)))
 
 (defn- base64 [b]
   (Base64/encodeBase64String b))
 
 (defn- debase64 [s]
-  (Base64/decodeBase64 (bytes s)))
+  (Base64/decodeBase64 (string-to-bytes s)))
 
 (defn- get-raw-key [seed]
   (let [keygen (KeyGenerator/getInstance "AES")
         sr (SecureRandom/getInstance "SHA1PRNG")]
-    (.setSeed sr (bytes seed))
+    (.setSeed sr (string-to-bytes seed))
     (.init keygen 128 sr)
     (.. keygen generateKey getEncoded)))
 
@@ -34,9 +37,10 @@
     (.init cipher mode key-spec)
     cipher))
 
-(defn encrypt [bytes key]
-  (let [cipher (get-cipher Cipher/ENCRYPT_MODE key)]
-    (base64 (.doFinal cipher bytes))))
+(defn encrypt [byte-vec key]
+  (let [cipher (get-cipher Cipher/ENCRYPT_MODE key)
+        arr (vec-to-bytes byte-vec)]
+    (base64 (.doFinal cipher arr))))
 
 (defn decrypt [text key]
   (let [cipher (get-cipher Cipher/DECRYPT_MODE key)]

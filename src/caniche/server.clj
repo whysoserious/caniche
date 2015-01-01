@@ -1,5 +1,6 @@
 (ns caniche.server
-  (require [clojure.java.io :as io]
+  (require [caniche.crypto :as cc]
+           [clojure.java.io :as io]
            [compojure.core :refer :all]
            [compojure.core :as route]
            [clojure.core.async :as async :refer [go chan <! >!]]
@@ -22,18 +23,19 @@
    :payload (IOUtils/toByteArray input-stream)})
 
 (defn process-chunk [chunk]
-  (String. (chunk)))
+  (cc/encrypt chunk "dupa"))
 
 (defn handle-upload [payload filename]
   (let [c (chan)
         chunks (split-into-chunks payload chunk-size)]
-    (prn chunks)
-    ;; (go
-    ;;   (doseq [chunk chunks] (>! c (process-chunk chunk)))
- ;;     )
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body "OK!\n"}))
+    (prn (take 1 chunks))
+    (prn (process-chunk (take 1 chunks))
+          ;; (go
+          ;;   (doseq [chunk chunks] (>! c (process-chunk chunk)))
+          ;;     )
+          {:status 200
+           :headers {"Content-Type" "text/html"}
+           :body "OK!\n"})))
 
 (defroutes caniche-routes
   (POST "/upload"
@@ -44,6 +46,7 @@
   (-> 
    caniche-routes
    (multipart-params/wrap-multipart-params {:store mem-store})))
+
 
 
 

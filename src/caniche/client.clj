@@ -1,16 +1,16 @@
 (ns caniche.client
-  (require [ring.util.codec :as c]
+  (require [clojure.set :as set]
            [clojure.string :as string]
-           [clojure.set :as set]
            [hickory.core :as hc]
            [hickory.select :as hs]
-           [org.httpkit.client :as http]))
+           [org.httpkit.client :as http]
+           [ring.util.codec :as c]))
 
 (def hostname "www.pudelek.pl")
 
 (def origin (str "http://" hostname))
 
-;; TODO
+;; TODO read from file
 (defn- random-user-agent []
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36")
 
@@ -35,41 +35,30 @@
                   "article_comment[txt]" body
                   "article_comment[aut]" nick})))
 
-;; TODO error-handling
-;; s/url/path
-(defn- get-page [url]
-  "returns future of a body in hickory form"
-  (http/get url
-            {:headers (standard-headers)}
-            (fn [{body :body}] (-> body hc/parse hc/as-hickory))))
-
 (defn- extract-comment [page anchor]
   (let [selector (hs/select 
-       (hs/child 
-        (hs/id anchor) 
-        (hs/class "comment-body")
-        (hs/class "comment-text")) page)]
-    (-> selector first :content first string/trim))) ;; TODO page == Future
+                  (hs/child 
+                   (hs/id anchor) 
+                   (hs/class "comment-body")
+                   (hs/class "comment-text")) page)]
+    (-> selector first :content first string/trim)))
 
 (defn get-comment [url anchor]
-  (-> url get-page (extract-comment anchor)))
+  "returns future"
+  (http/get url
+            {:headers (standard-headers)}
+            (fn [{body :body}] (-> body hc/parse hc/as-hickory (extract-comment anchor)))))
 
 (defn post-comment [story-id body nick]
-  "Returns :url and :anchor"
+  "Returns future with {:url and :anchor}"
   (let [body (create-comment-body story-id body nick)
         referer (str origin  "/artykul/" story-id)
         headers (assoc (standard-headers) "Referer" referer)]
-    (-> (http/post (str origin "/komentarz") {:body body
-                                              :body-encoding "UTF-8"
-                                              :headers headers})
-        :headers
-        (get "Location")
-        (string/split #"#")
-        (zipmap [:url :anchor])
-        set/map-invert)))
-
-
-
-
-
-
+    (http/post (str origin "/komentarz")
+               {:body body :body-encoding "UTF-8" :headers headers}
+               (fn [{response-headers :headers}]
+                 (-> response-headers
+                     (get "Location")
+                     (string/split #"#")
+                     (zipmap [:url :anchor])
+                     set/map-invert)))))
